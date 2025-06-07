@@ -7,6 +7,8 @@ import folium
 from streamlit_folium import st_folium
 import requests
 from folium.plugins import MarkerCluster
+from minwon_core import Minwon, save_minwon_to_gsheet, load_minwons_from_gsheet, increment_like_count_in_gsheet, mark_minwon_as_solved_in_gsheet
+
 
 # ==== Kakao API설치====
 KAKAO_API_KEY = "72a8d42e1f121df307e0deb0f132ff66"
@@ -53,7 +55,16 @@ def get_minwon_author_input() -> str:
 
 #====지도====
 INITIAL_MAP_CENTER = [37.5665, 126.9780]
-INITIAL_MAP_ZOOM = 12   
+INITIAL_MAP_ZOOM = 12
+
+category_colors = {
+    "교통 불편": "red",
+    "환경 문제": "green",
+    "시설 개선": "blue",
+    "안전 문제": "orange",
+    "기타 건의": "gray"
+}
+
 def display_interactive_map():
     st.subheader("1. 지도에서 민원 위치 선택")
     if "map_center" not in st.session_state:

@@ -11,7 +11,7 @@ from minwon_core import Minwon, save_minwon_to_gsheet, load_minwons_from_gsheet,
 
 
 # ==== Kakao API설치====
-KAKAO_API_KEY = "72a8d42e1f121df307e0deb0f132ff66"
+KAKAO_API_KEY = "a34b932ea6ee81a3d6634de738ef60f3"
 
 def get_address_from_coords(lat, lon):
     url = "https://dapi.kakao.com/v2/local/geo/coord2address.json"
@@ -262,13 +262,21 @@ def main():
 
     elif app_mode == "view_all":
         st.header("📜 전체 민원 목록")
+
+        filter_status = st.radio(
+        "상태별 보기", 
+        options=["전체", "미해결", "처리완료"],
+        horizontal=True
+        )
+        minwons_to_display = st.session_state.minwons_list
+
+        if filter_status != "전체":
+            minwons_to_display = [mw for mw in minwons_to_display if mw.status == filter_status]
         
         if not GOOGLE_SHEETS_ENABLED and not st.session_state.minwons_list:
              st.warning("Google Sheets에 연결되지 않았고, 현재 세션에 민원 데이터가 없습니다. 민원을 먼저 제출하거나 Google Sheets 연결을 확인해주세요.")
         
         search_author_query = st.text_input("제출자 이름으로 검색 (일부 입력 가능):", key="author_search_input")
-        
-        minwons_to_display = st.session_state.minwons_list
         
         filtered_minwons = minwons_to_display
         if search_author_query.strip():

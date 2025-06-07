@@ -34,6 +34,68 @@ def get_address_from_coords(lat, lon):
         st.error(f"주소 변환 중 오류 발생: {e}")
         return "주소 변환 오류"
 
+#====지도====
+INITIAL_MAP_CENTER = [37.5665, 126.9780]
+INITIAL_MAP_ZOOM = 12   
+def display_interactive_map():
+    st.subheader("1. 지도에서 민원 위치 선택")
+    if "map_center" not in st.session_state:
+        st.session_state.map_center = INITIAL_MAP_CENTER
+    if "selected_map_coordinates" not in st.session_state:
+        st.session_state.selected_map_coordinates = None
+    if "selected_korean_address" not in st.session_state:
+        st.session_state.selected_korean_address = ""
+
+    m = folium.Map(location=st.session_state.map_center, zoom_start=INITIAL_MAP_ZOOM)
+    if st.session_state.selected_map_coordinates:
+        folium.Marker(
+            location=st.session_state.selected_map_coordinates,
+            popup=st.session_state.selected_korean_address or "선택된 위치",
+            tooltip=st.session_state.selected_korean_address or "선택된 위치"
+        ).add_to(m)
+
+    map_data = st_folium(m, width=700, height=500, key="interactive_map")
+    if map_data and map_data.get("last_clicked"):
+        last_click = map_data["last_clicked"]
+        clicked_coords_tuple = (last_click["lat"], last_click["lng"])
+        if clicked_coords_tuple != st.session_state.selected_map_coordinates:
+            st.session_state.selected_map_coordinates = clicked_coords_tuple
+            st.session_state.map_center = [last_click["lat"], last_click["lng"]]
+            address = get_address_from_coords(last_click["lat"], last_click["lng"])
+            st.session_state.selected_korean_address = address if address else "주소를 찾을 수 없습니다."
+
+    if st.session_state.selected_map_coordinates:
+        lat, lon = st.session_state.selected_map_coordinates
+        st.success(f"선택된 좌표: 위도 {lat:.5f}, 경도 {lon:.5f}")
+        if st.session_state.selected_korean_address:
+            st.info(f"자동 인식된 주소: {st.session_state.selected_korean_address}")
+    else:
+        st.info("지도에서 민원 발생 위치를 클릭해주세요.")
+
+    return st.session_state.selected_map_coordinates, st.session_state.selected_korean_address
+
+def display_overview_map(minwons: List[Minwon]):
+    st.subheader("🗺️ 전체 민원 위치 보기 (유형별 그룹)")
+    map_view = folium.Map(location=INITIAL_MAP_CENTER, zoom_start=INITIAL_MAP_ZOOM)
+    marker_cluster = MarkerCluster().add_to(map_view)
+
+    points_added = 0
+    for mw in minwons:
+        if mw.coordinates:
+            popup_text = f"<b>{mw.title}</b><br>유형: {mw.category}<br>내용: {mw.content[:30]}..."
+            folium.Marker(
+                location=mw.coordinates,
+                popup=folium.Popup(popup_text, max_width=300),
+                tooltip=mw.title,
+                icon=folium.Icon(color=category_colors.get(mw.category, "lightgray"))
+            ).add_to(marker_cluster)
+            points_added +=1
+
+    if points_added > 0:
+        st_folium(map_view, width=700, height=500, key="overview_map")
+    else:
+        st.info("지도에 표시할 좌표가 있는 민원이 없습니다.")
+
 def main():
     pass
 

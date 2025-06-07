@@ -128,6 +128,32 @@ def show_date_statistics(minwons: List[Minwon]):
         st.info("날짜별 제출 현황을 집계할 수 없습니다.")
     else:
         st.bar_chart(date_counts)
+
+# ==== 좋아요/상태변경 ====
+def display_minwon_instance(minwon_item: Minwon):
+    st.markdown(minwon_item.to_display_string())
+
+    like_count = minwon_item.like_count
+    button_label = f"👍 추천 ({like_count})"
+    if st.button(button_label, key=f"like_button_{minwon_item.id}"):
+        if GOOGLE_SHEETS_ENABLED:
+            success = increment_like_count_in_gsheet(minwon_item.id)
+            if success:
+                st.session_state.minwons_list = load_minwons_from_gsheet()
+                st.rerun()
+            else:
+                st.error("추천 수를 업데이트하는 데 실패했습니다.")
+        else:
+            st.warning("Google Sheets에 연결되지 않아 추천 수를 기록할 수 없습니다.")
+
+    if minwon_item.status != "처리완료":
+        if st.button("이 민원을 처리완료로 변경", key=f"solve_btn_{minwon_item.id}"):
+            if mark_minwon_as_solved_in_gsheet(minwon_item.id):
+                st.success("상태가 '처리완료'로 변경되었습니다!")
+                st.session_state.minwons_list = load_minwons_from_gsheet()
+                st.rerun()
+    st.markdown("---")
+
 def main():
     pass
 

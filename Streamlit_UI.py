@@ -96,6 +96,38 @@ def display_overview_map(minwons: List[Minwon]):
     else:
         st.info("지도에 표시할 좌표가 있는 민원이 없습니다.")
 
+
+#====유형/날짜별 시각화====
+def show_category_statistics(minwons: List[Minwon]):
+    st.subheader("📊 민원 유형별 통계")
+    if minwons:
+        df = pd.DataFrame([{"유형": mw.category} for mw in minwons])
+        category_counts = df["유형"].value_counts()
+        if not category_counts.empty:
+            st.bar_chart(category_counts)
+        else:
+            st.info("통계에 사용할 민원 데이터가 없습니다.")
+    else:
+        st.info("민원 데이터가 없어 유형별 통계를 표시할 수 없습니다.")
+
+def show_date_statistics(minwons: List[Minwon]):
+    st.subheader("📅 날짜별 민원 제출 현황")
+    if not minwons:
+        st.info("민원 데이터가 없어 날짜별 통계를 표시할 수 없습니다.")
+        return
+
+    dates = [mw.date for mw in minwons if mw.date]
+    if not dates:
+        st.info("민원 데이터에 유효한 날짜 정보가 없어 통계를 표시할 수 없습니다.")
+        return
+
+    df = pd.DataFrame({"날짜": dates})
+    df["날짜"] = pd.to_datetime(df["날짜"])
+    date_counts = df["날짜"].dt.date.value_counts().sort_index()
+    if date_counts.empty:
+        st.info("날짜별 제출 현황을 집계할 수 없습니다.")
+    else:
+        st.bar_chart(date_counts)
 def main():
     pass
 
